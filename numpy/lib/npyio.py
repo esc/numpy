@@ -636,9 +636,13 @@ def _savez_no_temp(file, args, kwds, compress):
         fname = key + '.npy'
         sio.seek(0)  # reset buffer
         format.write_array(sio, np.asanyarray(val))
+        # TODO this may break with multiple arrays, since sio remembers how
+        # many bytes were written and if the first was larger than the second
+        # we might end up with trailing garbage.
         zipf.writestr(fname, sio.getvalue())
 
     zipf.close()
+
 
 def _getconv(dtype):
     """ Find the correct dtype converter. Adapted from matplotlib """
