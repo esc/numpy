@@ -33,7 +33,8 @@ loads = pickle.loads
 __all__ = [
     'savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
     'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
-    'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource']
+    'savez_compressed', '_savez_no_temp', 'packbits', 'unpackbits',
+    'fromregex', 'DataSource']
 
 
 def seek_gzip_factory(f):
@@ -604,6 +605,40 @@ def _savez(file, args, kwds, compress):
 
     zipf.close()
 
+def _savez_no_temp(file, args, kwds, compress):
+    # Import is postponed to here since zipfile depends on gzip, an optional
+    # component of the so-called standard library.
+    import zipfile
+
+    from cStringIO import StringIO
+
+    if isinstance(file, basestring):
+        if not file.endswith('.npz'):
+            file = file + '.npz'
+
+    namedict = kwds
+    for i, val in enumerate(args):
+        key = 'arr_%d' % i
+        if key in namedict.keys():
+            raise ValueError(
+                "Cannot use un-named variables and keyword %s" % key)
+        namedict[key] = val
+
+    if compress:
+        compression = zipfile.ZIP_DEFLATED
+    else:
+        compression = zipfile.ZIP_STORED
+
+    zipf = zipfile_factory(file, mode="w", compression=compression)
+    # reusable memory buffer
+    sio = StringIO()
+    for key, val in namedict.items():
+        fname = key + '.npy'
+        sio.seek(0)  # reset buffer
+        format.write_array(sio, np.asanyarray(val))
+        zipf.writestr(fname, sio.getvalue())
+
+    zipf.close()
 
 def _getconv(dtype):
     """ Find the correct dtype converter. Adapted from matplotlib """
