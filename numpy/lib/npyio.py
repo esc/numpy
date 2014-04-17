@@ -637,7 +637,8 @@ def _savez_no_temp(file, args, kwds, compress):
         fname = key + '.npy'
         sio.seek(0)  # reset buffer
         format.write_array(sio, np.asanyarray(val))
-        zipf.writestr(fname, sio.getvalue(True))
+        array_bytes = sio.getvalue(True)
+        zipf.writestr(fname, array_bytes)
 
     zipf.close()
 
