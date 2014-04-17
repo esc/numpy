@@ -605,6 +605,7 @@ def _savez(file, args, kwds, compress):
 
     zipf.close()
 
+
 def _savez_no_temp(file, args, kwds, compress):
     # Import is postponed to here since zipfile depends on gzip, an optional
     # component of the so-called standard library.
